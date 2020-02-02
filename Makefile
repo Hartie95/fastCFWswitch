@@ -185,10 +185,8 @@ DEPENDS	:=	$(OFILES:.o=.d)
 #---------------------------------------------------------------------------------
 all	:	 $(OUTPUT).ovl
 
-$(OUTPUT).ovl		:	$(OUTPUT).nro
-	@cp $(OUTPUT).nro $(OUTPUT).ovl
-
-$(OUTPUT).nro	:   $(OUTPUT).elf $(OUTPUT).nacp 
+$(OUTPUT).ovl		:	$(OUTPUT).elf $(OUTPUT).nacp 
+	@elf2nro $< $@ $(NROFLAGS)
 	@echo "built ... $(notdir $(OUTPUT).ovl)"
 
 $(OUTPUT).elf	:	$(OFILES) libs/libtesla/lib/libtesla.a

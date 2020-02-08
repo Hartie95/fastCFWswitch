@@ -9,7 +9,7 @@
                 "C:/devkitPro/portlibs/switch/include/**",
                 "C:/devkitPro/portlibs/switch/include/freetype2/**",
                 "${workspaceFolder}/include/**",
-                "${workspaceFolder}/libtesla/include/**"
+                "${workspaceFolder}/libs/libtesla/include/**"
             ],
             "defines": [
                 "SWITCH",

@@ -195,10 +195,6 @@ $(OFILES_SRC)	: $(HFILES_BIN)
 
 libs/libtesla/lib/libtesla.a:
 	@$(MAKE) --no-print-directory -C $(TOPDIR)/libs/libtesla -f Makefile
-	
-clean:
-	@$(MAKE) --no-print-directory -C $(TOPDIR)/libs/libtesla -f Makefile clean
-	@rm -fr $(BUILD) $(TARGET).ovl $(TARGET).nro $(TARGET).nacp $(TARGET).elf
 
 #---------------------------------------------------------------------------------
 # you need a rule like this for each extension you use as binary data

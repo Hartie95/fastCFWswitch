@@ -1,5 +1,9 @@
 #define TESLA_INIT_IMPL // If you have more than one file using the tesla header, only define this in the main one
 #include <tesla.hpp>    // The Tesla Header
+#include "payloadHandler.h"
+#include "payload.h"
+#include "section.h"
+#include "configParser.h"
 
 
 class GuiTest : public tsl::Gui {
@@ -9,15 +13,35 @@ public:
     // Called when this Gui gets loaded to create the UI
     // Allocate all elements on the heap. libtesla will make sure to clean them up when not needed anymore
     virtual tsl::elm::Element* createUI() override {
-        // A OverlayFrame is the base element every overlay consists of. This will draw the default Title and Subtitle.
-        // If you need more information in the header or want to change it's look, use a HeaderOverlayFrame.
-        auto frame = new tsl::elm::OverlayFrame("Tesla Example", "v1.3.1");
-
-        // A list that can contain sub elements and handles scrolling
+        auto frame = new tsl::elm::OverlayFrame("Switch CFW", "v1.0.0");
         auto list = new tsl::elm::List();
 
-        // Create and add a new list item to the list
-        list->addItem(new tsl::elm::ListItem("Default List Item"));
+        fastCFWSwitcher::ConfigParser* configParser = new fastCFWSwitcher::ConfigParser(CONFIG_FILE_PATH, list);
+        fastCFWSwitcher::PayloadHandler* payloadHandler = new fastCFWSwitcher::PayloadHandler(frame);
+
+
+        std::list<fastCFWSwitcher::Element*>* payloadList = configParser->getElements();
+
+        /*fastCFWSwitcher::Element* payload = (fastCFWSwitcher::Element*) new fastCFWSwitcher::Payload("atmosphere", "/atmosphere/reboot_payload.bin");
+        payloadList.push_back(payload);
+
+        payload = (fastCFWSwitcher::Element*) new fastCFWSwitcher::Payload("SXOS", "/sxos/reboot_payload.bin");
+        payloadList.push_back(payload);
+
+        payload = (fastCFWSwitcher::Element*) new fastCFWSwitcher::Section("Tools");
+        payloadList.push_back(payload);
+        payload = (fastCFWSwitcher::Element*) new fastCFWSwitcher::Payload("Hekate", "/bootloader/reboot_payload.bin");
+        payloadList.push_back(payload);
+*/
+
+        if(payloadList!=nullptr){
+            for(fastCFWSwitcher::Element* curPayload : *payloadList){
+                auto item = curPayload->toListItem(payloadHandler);
+                list->addItem(item);
+            }
+        } else {
+            list->addItem(new tsl::elm::CategoryHeader("list is null"));
+        }
 
         // Add the list to the frame for it to be drawn
         frame->setContent(list);
@@ -35,9 +59,10 @@ public:
     virtual bool handleInput(u64 keysDown, u64 keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
         return false;   // Return true here to singal the inputs have been consumed
     }
+
 };
 
-class OverlayTest : public tsl::Overlay {
+class FastCFWSwitchOverlay : public tsl::Overlay {
 public:
                                              // libtesla already initialized fs, hid, pl, pmdmnt, hid:sys and set:sys
     virtual void initServices() override {}  // Called at the start to initialize all services necessary for this Overlay
@@ -52,5 +77,5 @@ public:
 };
 
 int main(int argc, char **argv) {
-    return tsl::loop<OverlayTest>(argc, argv);
+    return tsl::loop<FastCFWSwitchOverlay>(argc, argv);
 }

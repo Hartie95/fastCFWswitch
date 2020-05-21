@@ -12,7 +12,7 @@ using namespace fastCFWSwitcher;
 namespace fastCFWSwitcher {
     class ConfigEntry{
         public:
-            ConfigEntry(std::string section, int pos) : section(section), pos(pos){
+            ConfigEntry(std::string section, int pos) : section(section), pos(pos), bootPos(-1){
                 this->type.assign("payload");
             }
             void setType(const char * type){
@@ -24,12 +24,26 @@ namespace fastCFWSwitcher {
             void setPath(const char * path){
                 this->path.assign(path);
             }
+            void setBootPos(int bootPos){
+                this->bootPos=bootPos;
+            }
+            void setBootId(const char * bootId){
+                this->bootId.assign(bootId);
+            }
 
             Element* toElement(){
                 if(type == "section" || path.empty()){
                     return (Element*) new Section(name);
                 } else if(type == "payload"){
-                    return (Element*) new Payload(name, path);
+                    Payload* payload = new Payload(name, path);
+                    if(bootPos!=-1){
+                        payload->setBootPos(bootPos);
+                    }
+                    if(!bootId.empty()){
+                        payload->setBootId(bootId);
+                    }
+                    return (Element*) payload;
+
                 }
                 return nullptr;
             }
@@ -44,6 +58,8 @@ namespace fastCFWSwitcher {
             std::string type;
             std::string name;
             std::string path;
+            int bootPos;
+            std::string bootId;
         private:
     };
 }
@@ -70,6 +86,10 @@ int handler(void *user, const char *section, const char *name, const char *value
         configEntry->setName(value);
     } else if (!strcmp("path", name)) {
         configEntry->setPath(value);
+    } else if (!strcmp("bootPos", name)) {
+        configEntry->setBootPos(strtol(value, (char **)NULL, 10));
+    } else if (!strcmp("bootId", name)) {
+        configEntry->setBootId(value);
     }
     return 1;
 }

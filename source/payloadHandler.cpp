@@ -10,14 +10,37 @@ using namespace fastCFWSwitcher;
 #define IRAM_PAYLOAD_MAX_SIZE 0x2F000
 #define IRAM_PAYLOAD_BASE 0x40010000
 
+
 alignas(0x1000) static u8 g_ff_page[0x1000];
 alignas(0x1000) static u8 g_work_page[0x1000];
 alignas(0x1000) static  u8 g_reboot_payload[IRAM_PAYLOAD_MAX_SIZE];
 
 
-void PayloadHandler::rebootToPayload(fastCFWSwitcher::Payload* payload){
-    reboot_to_payload(payload->getPath().c_str());
-}
+#define HEKATE_AUTOBOOT_POS 0x94
+
+#define BOOT_CFG_AUTOBOOT_EN (1 << 0)
+#define BOOT_CFG_FROM_LAUNCH (1 << 1)
+#define BOOT_CFG_FROM_ID     (1 << 2)
+#define BOOT_CFG_TO_EMUMMC   (1 << 3)
+#define BOOT_CFG_SEPT_RUN    (1 << 7)
+
+typedef struct __attribute__((__packed__)) _boot_cfg_t
+{
+    u8 boot_cfg;
+    u8 autoboot;
+    u8 autoboot_list;
+    u8 extra_cfg;
+    union
+    {
+        struct
+        {
+            char id[8]; // 7 char ASCII null teminated.
+            char emummc_path[0x78]; // emuMMC/XXX, ASCII null teminated.
+        };
+        u8 ums; // nyx_ums_type.
+        u8 xt_str[0x80];
+    };
+} boot_cfg_t;
 
 void PayloadHandler::do_iram_dram_copy(void *buf, uintptr_t iram_addr, size_t size, int option) {
     memcpy(g_work_page, buf, size);
@@ -52,8 +75,75 @@ void PayloadHandler::setError(std::string errorString){
     this->frame->setSubtitle(errorString);
 }
 
+void PayloadHandler::applyPayloadArgs(fastCFWSwitcher::Payload* payload){
+    if(!payload->getBootId().empty()){
+        boot_cfg_t* hekateCFG = (boot_cfg_t*) &g_reboot_payload[HEKATE_AUTOBOOT_POS];
+        hekateCFG->boot_cfg = BOOT_CFG_FROM_ID|BOOT_CFG_AUTOBOOT_EN;
+
+        std::string bootID = payload->getBootId();
+        strcpy(hekateCFG->id, bootID.c_str());
+
+    } else if (payload->getBootPos()!=-1){
+        boot_cfg_t* hekateCFG = (boot_cfg_t*) &g_reboot_payload[HEKATE_AUTOBOOT_POS];
+        hekateCFG->boot_cfg = BOOT_CFG_AUTOBOOT_EN;
+        hekateCFG->autoboot = payload->getBootPos();
+        hekateCFG->autoboot_list = 0;
+    }
+}
+
+bool PayloadHandler::loadPayload(fastCFWSwitcher::Payload* payload){
+    FsFileSystem fsSdmc;
+    FsFile fileConfig;
+
+    if(R_FAILED(fsOpenSdCardFileSystem(&fsSdmc))){
+        setError("open sd failed\n");
+        return false;
+    }
+
+    /* Open config file. */
+    char pathBuf[FS_MAX_PATH]; 
+    strcpy(pathBuf, payload->getPath().c_str());//fixes error 0xd401
+    Result fsOpenResult = fsFsOpenFile(&fsSdmc, pathBuf, FsOpenMode_Read, &fileConfig);
+    if (R_FAILED(fsOpenResult)){
+        setError("open file failed"+std::to_string(fsOpenResult));
+        fsFsClose(&fsSdmc);
+        return false;
+    }
+
+
+    /* Get config file size. */
+    s64 configFileSize;
+    if (R_FAILED(fsFileGetSize(&fileConfig, &configFileSize))){
+        setError("get file size failed\n");
+        fsFileClose(&fileConfig);
+        fsFsClose(&fsSdmc);
+        return false;
+    }
+
+    if(configFileSize>sizeof(g_reboot_payload)){
+        setError("to big\n");
+        fsFileClose(&fileConfig);
+        fsFsClose(&fsSdmc);
+        return false;
+    }
+
+    memset(g_reboot_payload, 0xFF, sizeof(g_reboot_payload));
+    u64 readSize;
+    Result rc = fsFileRead(&fileConfig, 0, g_reboot_payload, configFileSize, FsReadOption_None, &readSize);
+    if (R_FAILED(rc) || readSize != static_cast<u64>(configFileSize)){
+        setError("read file failed\n");
+        fsFileClose(&fileConfig);
+        fsFsClose(&fsSdmc);
+        return false;
+    }
+
+    fsFileClose(&fileConfig);
+    fsFsClose(&fsSdmc);
+    return true;
+}
+
 //todo better error handling
-void PayloadHandler::reboot_to_payload(const char* payloadPath) {
+void PayloadHandler::rebootToPayload(fastCFWSwitcher::Payload* payload) {
     smInitialize();
     Result splResult = splInitialize();
     smExit();
@@ -65,57 +155,16 @@ void PayloadHandler::reboot_to_payload(const char* payloadPath) {
         return ;
     }
 
-    FsFileSystem fsSdmc;
-    FsFile fileConfig;
+    bool loadResult = loadPayload(payload);
 
-    if(R_FAILED(fsOpenSdCardFileSystem(&fsSdmc))){
-        setError("open sd failed\n");
-        splExit();
-        return ;
-    }
-
-    /* Open config file. */
-    if (R_FAILED(fsFsOpenFile(&fsSdmc, payloadPath, FsOpenMode_Read, &fileConfig))){
-        setError("open file failed\n");
-        fsFsClose(&fsSdmc);
-        splExit();
-        return ;
-    }
-
-
-    /* Get config file size. */
-    s64 configFileSize;
-    if (R_FAILED(fsFileGetSize(&fileConfig, &configFileSize))){
-        setError("get file size failed\n");
-        fsFileClose(&fileConfig);
-        fsFsClose(&fsSdmc);
-        splExit();
-        return ;
-    }
-
-    if(configFileSize>sizeof(g_reboot_payload)){
-        setError("to big\n");
-        fsFileClose(&fileConfig);
-        fsFsClose(&fsSdmc);
+    if(!loadResult){
         splExit();
         return;
     }
 
-    memset(g_reboot_payload, 0xFF, sizeof(g_reboot_payload));
-    u64 readSize;
-    Result rc = fsFileRead(&fileConfig, 0, g_reboot_payload, configFileSize, FsReadOption_None, &readSize);
-    if (R_FAILED(rc) || readSize != static_cast<u64>(configFileSize)){
-        setError("read file failed\n");
-        fsFileClose(&fileConfig);
-        fsFsClose(&fsSdmc);
-        splExit();
-        return ;
-    }
+    applyPayloadArgs(payload);
 
-    fsFileClose(&fileConfig);
-    fsFsClose(&fsSdmc);
     clear_iram();
-    
     for (size_t i = 0; i < IRAM_PAYLOAD_MAX_SIZE; i += 0x1000) {
         copy_to_iram(IRAM_PAYLOAD_BASE + i, &g_reboot_payload[i], 0x1000);
     }

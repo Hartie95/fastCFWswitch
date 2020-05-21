@@ -18,7 +18,8 @@ namespace fastCFWSwitcher {
             void copy_to_iram(uintptr_t iram_addr, void *buf, size_t size);
             void copy_from_iram(void *buf, uintptr_t iram_addr, size_t size) ;
             void clear_iram(void);
-            void reboot_to_payload(const char* payloadPath);
+            bool loadPayload(fastCFWSwitcher::Payload* payload);
+            void applyPayloadArgs(fastCFWSwitcher::Payload* payload);
             tsl::elm::OverlayFrame* frame;
     };
 }

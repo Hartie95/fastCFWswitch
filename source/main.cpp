@@ -13,7 +13,7 @@ public:
     // Called when this Gui gets loaded to create the UI
     // Allocate all elements on the heap. libtesla will make sure to clean them up when not needed anymore
     virtual tsl::elm::Element* createUI() override {
-        auto frame = new tsl::elm::OverlayFrame("Switch CFW", "v1.0.0");
+        auto frame = new tsl::elm::OverlayFrame("Switch CFW", "v1.1.0");
         auto list = new tsl::elm::List();
 
         fastCFWSwitcher::ConfigParser* configParser = new fastCFWSwitcher::ConfigParser(CONFIG_FILE_PATH, list);

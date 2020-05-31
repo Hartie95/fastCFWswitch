@@ -16,13 +16,18 @@ alignas(0x1000) static u8 g_work_page[0x1000];
 alignas(0x1000) static  u8 g_reboot_payload[IRAM_PAYLOAD_MAX_SIZE];
 
 
+//Hekate config and magic
 #define HEKATE_AUTOBOOT_POS 0x94
+#define HEKATE_MAGIC_POS 0x118
+#define HEKATE_VERSION 0x11C
+#define HEKATE_MAGIC 0x43544349
 
 #define BOOT_CFG_AUTOBOOT_EN (1 << 0)
 #define BOOT_CFG_FROM_LAUNCH (1 << 1)
 #define BOOT_CFG_FROM_ID     (1 << 2)
 #define BOOT_CFG_TO_EMUMMC   (1 << 3)
 #define BOOT_CFG_SEPT_RUN    (1 << 7)
+
 
 typedef struct __attribute__((__packed__)) _boot_cfg_t
 {
@@ -76,20 +81,38 @@ void PayloadHandler::setError(std::string errorString){
 }
 
 void PayloadHandler::applyPayloadArgs(fastCFWSwitcher::Payload* payload){
-    if(!payload->getBootId().empty()){
-        boot_cfg_t* hekateCFG = (boot_cfg_t*) &g_reboot_payload[HEKATE_AUTOBOOT_POS];
-        hekateCFG->boot_cfg = BOOT_CFG_FROM_ID|BOOT_CFG_AUTOBOOT_EN;
+    PayloadType payloadType = getBinPayloadType(payload);
 
-        std::string bootID = payload->getBootId();
-        strcpy(hekateCFG->id, bootID.c_str());
+    switch(payloadType){
+        case PayloadType::HEKATE:
+            int hekateVersion = strtol((char*)&g_reboot_payload[HEKATE_VERSION], (char **)NULL, 10);
+            if(hekateVersion>=502 && !payload->getBootId().empty()){
+                boot_cfg_t* hekateCFG = (boot_cfg_t*) &g_reboot_payload[HEKATE_AUTOBOOT_POS];
+                hekateCFG->boot_cfg = BOOT_CFG_FROM_ID|BOOT_CFG_AUTOBOOT_EN;
 
-    } else if (payload->getBootPos()!=-1){
-        boot_cfg_t* hekateCFG = (boot_cfg_t*) &g_reboot_payload[HEKATE_AUTOBOOT_POS];
-        hekateCFG->boot_cfg = BOOT_CFG_AUTOBOOT_EN;
-        hekateCFG->autoboot = payload->getBootPos();
-        hekateCFG->autoboot_list = 0;
+                std::string bootID = payload->getBootId();
+                strcpy(hekateCFG->id, bootID.c_str());
+
+            } else if (payload->getBootPos()!=-1){
+                boot_cfg_t* hekateCFG = (boot_cfg_t*) &g_reboot_payload[HEKATE_AUTOBOOT_POS];
+                hekateCFG->boot_cfg = BOOT_CFG_AUTOBOOT_EN;
+                hekateCFG->autoboot = payload->getBootPos();
+                hekateCFG->autoboot_list = 0;
+            }
     }
 }
+
+
+PayloadType PayloadHandler::getBinPayloadType(fastCFWSwitcher::Payload* payload){
+
+    u32 hekateMagic=*((u32*)&g_reboot_payload[HEKATE_MAGIC_POS]);
+    if(hekateMagic==HEKATE_MAGIC){
+        return PayloadType::HEKATE;
+
+    } 
+    return PayloadType::UNKOWN;
+}
+
 
 bool PayloadHandler::loadPayload(fastCFWSwitcher::Payload* payload){
     FsFileSystem fsSdmc;

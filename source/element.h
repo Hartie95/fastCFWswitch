@@ -5,6 +5,6 @@ namespace fastCFWSwitcher{
 
     class Element{
         public:
-            virtual tsl::elm::ListItem* toListItem(fastCFWSwitcher::PayloadHandler* payloadHandler) = 0;
+            virtual tsl::elm::Element* toListItem(fastCFWSwitcher::PayloadHandler* payloadHandler) = 0;
     };
 }

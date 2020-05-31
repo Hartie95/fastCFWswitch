@@ -4,6 +4,6 @@
 using namespace fastCFWSwitcher;
 using namespace tsl::elm;
 
-ListItem* Section::toListItem(fastCFWSwitcher::PayloadHandler* PayloadHandler){
+ tsl::elm::Element* Section::toListItem(fastCFWSwitcher::PayloadHandler* PayloadHandler){
     return new CategoryHeader(this->name);
 }

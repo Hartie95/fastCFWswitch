@@ -4,6 +4,11 @@
 
 namespace fastCFWSwitcher {
 
+    enum class PayloadType { 
+        UNKOWN = 1, 
+        HEKATE = 2 
+    };
+
     class PayloadHandler{
 
         public:
@@ -20,6 +25,7 @@ namespace fastCFWSwitcher {
             void clear_iram(void);
             bool loadPayload(fastCFWSwitcher::Payload* payload);
             void applyPayloadArgs(fastCFWSwitcher::Payload* payload);
+            PayloadType getBinPayloadType(fastCFWSwitcher::Payload* payload);
             tsl::elm::OverlayFrame* frame;
     };
 }

@@ -9,7 +9,7 @@ namespace fastCFWSwitcher {
             Section(std::string name) : name(name){
             }
             ~Section(){}
-            tsl::elm::ListItem* toListItem(fastCFWSwitcher::PayloadHandler* PayloadHandler);
+            tsl::elm::Element* toListItem(fastCFWSwitcher::PayloadHandler* PayloadHandler);
 
         private:
             std::string name;

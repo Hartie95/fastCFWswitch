@@ -8,7 +8,7 @@ using namespace tsl::elm;
 
 
 
-ListItem* Payload::toListItem(PayloadHandler* payloadHandler){
+ tsl::elm::Element* Payload::toListItem(PayloadHandler* payloadHandler){
     auto item = new ListItem(this->name);
     std::function<bool(u64)> onClick = [item, payloadHandler, this](u64 keys) { 
         if(keys & KEY_A){

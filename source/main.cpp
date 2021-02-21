@@ -5,15 +5,23 @@
 #include "section.h"
 #include "configParser.h"
 
+class FastCFWSwitchBaseGui : public tsl::Gui {
+protected:    
+    tsl::elm::CustomDrawer* getErrorDrawer(std::string message1){
+        return new tsl::elm::CustomDrawer([message1](tsl::gfx::Renderer *renderer, s32 x, s32 y, s32 w, s32 h) {
+            renderer->drawString(message1.c_str(), false, x + 3, y + 15, 20, renderer->a(0xF22F));
+        });
+    }
+};
 
-class GuiTest : public tsl::Gui {
+class FastCFWSwitchGui : public FastCFWSwitchBaseGui {
 public:
-    GuiTest() { }
+    FastCFWSwitchGui() { }
 
     // Called when this Gui gets loaded to create the UI
     // Allocate all elements on the heap. libtesla will make sure to clean them up when not needed anymore
     virtual tsl::elm::Element* createUI() override {
-        auto frame = new tsl::elm::OverlayFrame("Switch CFW", "v1.1.0");
+        auto frame = new tsl::elm::OverlayFrame(APP_TITLE, APP_VERSION);
         auto list = new tsl::elm::List();
 
         fastCFWSwitcher::ConfigParser* configParser = new fastCFWSwitcher::ConfigParser(CONFIG_FILE_PATH, list);
@@ -22,25 +30,13 @@ public:
 
         std::list<fastCFWSwitcher::Element*>* payloadList = configParser->getElements();
 
-        /*fastCFWSwitcher::Element* payload = (fastCFWSwitcher::Element*) new fastCFWSwitcher::Payload("atmosphere", "/atmosphere/reboot_payload.bin");
-        payloadList.push_back(payload);
-
-        payload = (fastCFWSwitcher::Element*) new fastCFWSwitcher::Payload("SXOS", "/sxos/reboot_payload.bin");
-        payloadList.push_back(payload);
-
-        payload = (fastCFWSwitcher::Element*) new fastCFWSwitcher::Section("Tools");
-        payloadList.push_back(payload);
-        payload = (fastCFWSwitcher::Element*) new fastCFWSwitcher::Payload("Hekate", "/bootloader/reboot_payload.bin");
-        payloadList.push_back(payload);
-*/
-
         if(payloadList!=nullptr){
             for(fastCFWSwitcher::Element* curPayload : *payloadList){
                 auto item = curPayload->toListItem(payloadHandler);
                 list->addItem(item);
             }
         } else {
-            list->addItem(new tsl::elm::CategoryHeader("list is null"));
+            list->addItem(getErrorDrawer("List is emtpy/null\nIs the payload list configured?"), 40);
         }
 
         // Add the list to the frame for it to be drawn
@@ -49,30 +45,61 @@ public:
         // Return the frame to have it become the top level element of this Gui
         return frame;
     }
+};
 
-    // Called once every frame to update values
-    virtual void update() override {
-
+class FastCFWSwitchErrorGui : public FastCFWSwitchBaseGui {
+private:
+    std::string errorMessage;
+public:
+    FastCFWSwitchErrorGui(std::string errorMessage) { 
+        this->errorMessage = errorMessage;
     }
-
-    // Called once every frame to handle inputs not handled by other UI elements
-    virtual bool handleInput(u64 keysDown, u64 keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
-        return false;   // Return true here to singal the inputs have been consumed
+    virtual tsl::elm::Element* createUI() override {
+        auto frame = new tsl::elm::OverlayFrame(APP_TITLE, APP_VERSION);
+        frame->setContent(getErrorDrawer(errorMessage));
+        return frame;
     }
-
 };
 
 class FastCFWSwitchOverlay : public tsl::Overlay {
+private:
+    Result splInitializeResult;
+    static constexpr u32 ExosphereHasRcmBugPatch       = 65004;
 public:
-                                             // libtesla already initialized fs, hid, pl, pmdmnt, hid:sys and set:sys
-    virtual void initServices() override {}  // Called at the start to initialize all services necessary for this Overlay
-    virtual void exitServices() override {}  // Callet at the end to clean up all services previously initialized
+    // libtesla already initialized fs, hid, pl, pmdmnt, hid:sys and set:sys
+    virtual void initServices() override {
+        splInitializeResult = splInitialize();
+    }  // Called at the start to initialize all services necessary for this Overlay
+    virtual void exitServices() override {
+        splExit();
+    }  // Callet at the end to clean up all services previously initialized
 
     virtual void onShow() override {}    // Called before overlay wants to change from invisible to visible state
     virtual void onHide() override {}    // Called before overlay wants to change from visible to invisible state
 
     virtual std::unique_ptr<tsl::Gui> loadInitialGui() override {
-        return initially<GuiTest>();  // Initial Gui to load. It's possible to pass arguments to it's constructor like this
+        if(R_FAILED(splInitializeResult)){
+            //unable to init spl, cant reboot this way
+            return initially<FastCFWSwitchErrorGui>("Failed to init spl service\nError code: "+std::to_string(splInitializeResult));
+        }
+
+        // check if reboot to payload is supported:
+        Result rc = 0;
+        u64 hardware_type;
+        u64 has_rcm_bug_patch;
+        if (R_FAILED(rc = splGetConfig(SplConfigItem_HardwareType, &hardware_type))) {
+            return initially<FastCFWSwitchErrorGui>("Failed to get hardware type\nError code: "+std::to_string(rc));
+        }
+        if (R_FAILED(rc = splGetConfig(static_cast<SplConfigItem>(ExosphereHasRcmBugPatch), &has_rcm_bug_patch))) {
+            return initially<FastCFWSwitchErrorGui>("Failed to get rcm bug state\nError code: "+std::to_string(rc));
+        }
+        if(has_rcm_bug_patch) {
+            //unsupported Switch model/setup, show error
+            return initially<FastCFWSwitchErrorGui>("This Switch model is not supported\nReboot to payload is not possible\n\non a Mariko or modchipped Switch");
+        }else {
+            // create main GUI with payload selection
+            return initially<FastCFWSwitchGui>();
+        }
     }
 };
 

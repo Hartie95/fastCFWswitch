@@ -38,7 +38,7 @@ include $(DEVKITPRO)/libnx/switch_rules
 #   NACP building is skipped as well.
 #---------------------------------------------------------------------------------
 APP_TITLE	:=	fastCFWswitch
-APP_VERSION :=	1.1.0
+APP_VERSION :=	1.1.1
 
 TARGET		:=	$(notdir $(CURDIR))
 BUILD		:=	build
@@ -58,7 +58,7 @@ CFLAGS	:=	-g -Wall -O2 -ffunction-sections \
 
 CFLAGS	+=	$(INCLUDE) -I -D__SWITCH__
 
-CXXFLAGS	:= $(CFLAGS) -fno-exceptions -std=c++17
+CXXFLAGS	:= $(CFLAGS) -fno-exceptions -std=c++17 -DAPP_TITLE="\"$(APP_TITLE)\"" -DAPP_VERSION="\"v$(APP_VERSION)\""
 
 ASFLAGS	:=	-g $(ARCH)
 LDFLAGS	=	-specs=$(DEVKITPRO)/libnx/switch.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)

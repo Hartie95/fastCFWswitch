@@ -84,7 +84,7 @@ void PayloadHandler::applyPayloadArgs(fastCFWSwitcher::Payload* payload){
     PayloadType payloadType = getBinPayloadType(payload);
 
     switch(payloadType){
-        case PayloadType::HEKATE:
+        case PayloadType::HEKATE: {
             int hekateVersion = strtol((char*)&g_reboot_payload[HEKATE_VERSION], (char **)NULL, 10);
             if(hekateVersion>=502 && !payload->getBootId().empty()){
                 boot_cfg_t* hekateCFG = (boot_cfg_t*) &g_reboot_payload[HEKATE_AUTOBOOT_POS];
@@ -99,6 +99,11 @@ void PayloadHandler::applyPayloadArgs(fastCFWSwitcher::Payload* payload){
                 hekateCFG->autoboot = payload->getBootPos();
                 hekateCFG->autoboot_list = 0;
             }
+            break;
+        }
+        default:
+            //not supported, so do nothing
+            break;
     }
 }
 
@@ -143,7 +148,7 @@ bool PayloadHandler::loadPayload(fastCFWSwitcher::Payload* payload){
         return false;
     }
 
-    if(configFileSize>sizeof(g_reboot_payload)){
+    if((u64)configFileSize>sizeof(g_reboot_payload)){
         setError("to big\n");
         fsFileClose(&fileConfig);
         fsFsClose(&fsSdmc);
@@ -167,21 +172,9 @@ bool PayloadHandler::loadPayload(fastCFWSwitcher::Payload* payload){
 
 //todo better error handling
 void PayloadHandler::rebootToPayload(fastCFWSwitcher::Payload* payload) {
-    smInitialize();
-    Result splResult = splInitialize();
-    smExit();
-    if (R_FAILED(splResult)){
-        std::stringstream ss;
-        ss<< std::hex << splResult; // int decimal_value
-        std::string res ( ss.str() );
-        setError("splInitFailed: "+res);
-        return ;
-    }
-
     bool loadResult = loadPayload(payload);
 
     if(!loadResult){
-        splExit();
         return;
     }
 
@@ -207,6 +200,4 @@ void PayloadHandler::rebootToPayload(fastCFWSwitcher::Payload* payload) {
     } else{
         splSetConfig((SplConfigItem)65001, 2);
     }
-
-    splExit();
 }

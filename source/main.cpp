@@ -64,7 +64,6 @@ public:
 class FastCFWSwitchOverlay : public tsl::Overlay {
 private:
     Result splInitializeResult;
-    static constexpr u32 ExosphereHasRcmBugPatch       = 65004;
 public:
     // libtesla already initialized fs, hid, pl, pmdmnt, hid:sys and set:sys
     virtual void initServices() override {
@@ -86,17 +85,14 @@ public:
         // check if reboot to payload is supported:
         Result rc = 0;
         u64 hardware_type;
-        u64 has_rcm_bug_patch;
         if (R_FAILED(rc = splGetConfig(SplConfigItem_HardwareType, &hardware_type))) {
             return initially<FastCFWSwitchErrorGui>("Failed to get hardware type\nError code: "+std::to_string(rc));
         }
-        if (R_FAILED(rc = splGetConfig(static_cast<SplConfigItem>(ExosphereHasRcmBugPatch), &has_rcm_bug_patch))) {
-            return initially<FastCFWSwitchErrorGui>("Failed to get rcm bug state\nError code: "+std::to_string(rc));
-        }
-        if(has_rcm_bug_patch) {
-            //unsupported Switch model/setup, show error
-            return initially<FastCFWSwitchErrorGui>("This Switch model is not supported\nReboot to payload is not possible\n\non a Mariko or modchipped Switch");
-        }else {
+        const bool is_erista = hardware_type == 0 || hardware_type == 1;
+        if(!is_erista) {
+            // unsupported Switch model, show error
+            return initially<FastCFWSwitchErrorGui>("This Switch model is not supported\nReboot to payload is only possible\n\non an Erista Switch");
+        } else {
             // create main GUI with payload selection
             return initially<FastCFWSwitchGui>();
         }

@@ -2,7 +2,7 @@
 A tesla based overlay to boot into different payloads on the Nintendo Switch.
 
 ## Supported devices
-Only Switch consoles supporting the RCM bug are supported, because of the way exospheres reboot to payload and the sx modchip are working.
+Only Switch consoles with the old Erista SOC are supported, because exosphere uses a bootrom exploit to reboot to a payload.
 
 ## Setup
 * Setup the [tesla menu](https://github.com/WerWolv/Tesla-Menu) and [nx-ovlloader](https://github.com/WerWolv/ovl-sysmodules)

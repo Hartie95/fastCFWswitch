@@ -1,6 +1,9 @@
 # fastCFWswitch
 A tesla based overlay to boot into different payloads on the Nintendo Switch.
 
+## Supported devices
+Only Switch consoles supporting the RCM bug are supported, because of the way exospheres reboot to payload and the sx modchip are working.
+
 ## Setup
 * Setup the [tesla menu](https://github.com/WerWolv/Tesla-Menu) and [nx-ovlloader](https://github.com/WerWolv/ovl-sysmodules)
 * Extract the [latest release](https://github.com/Hartie95/fastCFWswitch/releases/latest) to the sd card

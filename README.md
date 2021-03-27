@@ -68,7 +68,7 @@ name=Hekate
 path=/payloads/hekate_ctcaer.bin
 
 [LOCKPICKRCM]
-name=Hekate
+name=Lockpick RCM
 path=/payloads/Lockpick_RCM.bin
 
 [UMS]

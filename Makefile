@@ -38,7 +38,7 @@ include $(DEVKITPRO)/libnx/switch_rules
 #   NACP building is skipped as well.
 #---------------------------------------------------------------------------------
 APP_TITLE	:=	fastCFWswitch
-APP_VERSION :=	1.1.1
+APP_VERSION :=	1.2.0
 
 TARGET		:=	$(notdir $(CURDIR))
 BUILD		:=	build

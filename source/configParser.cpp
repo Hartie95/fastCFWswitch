@@ -30,6 +30,9 @@ namespace fastCFWSwitcher {
             void setBootId(const char * bootId){
                 this->bootId.assign(bootId);
             }
+            void setUms(const char * bootId){
+                this->ums.assign(bootId);
+            }
 
             Element* toElement(){
                 if(type == "section" || path.empty()){
@@ -41,6 +44,9 @@ namespace fastCFWSwitcher {
                     }
                     if(!bootId.empty()){
                         payload->setBootId(bootId);
+                    }
+                    if(!ums.empty()){
+                        payload->setUmsName(ums);
                     }
                     return (Element*) payload;
 
@@ -58,8 +64,9 @@ namespace fastCFWSwitcher {
             std::string type;
             std::string name;
             std::string path;
-            int bootPos;
+            int bootPos = -1;
             std::string bootId;
+            std::string ums;
         private:
     };
 }
@@ -90,6 +97,8 @@ int handler(void *user, const char *section, const char *name, const char *value
         configEntry->setBootPos(strtol(value, (char **)NULL, 10));
     } else if (!strcmp("bootId", name)) {
         configEntry->setBootId(value);
+    } else if (!strcmp("ums", name)) {
+        configEntry->setUms(value);
     }
     return 1;
 }

@@ -11,13 +11,25 @@ Only Switch consoles with the old Erista SOC are supported, because exosphere us
 
 ## Configuration
 
-Attribute   | possible values                            | Description
------------ | ------------------------------------------ | ----------------
-`type`      | empty / `section` / `payload`              | This defines the type of element this section defines, if left empty it will automatically differentiate it by checking if a path is set
-`name`      | any string - example: `atmosphere`         | The entry name, shown in the Overlay
-`path`      | a path - example: `/bootloader/hekate.bin` | the absolute path, based on the root of the sd, to the payload that should be loaded
-`bootPos`   | a number                                   | the config position of the config the target payload should load, currently only supported for hekate
-`bootId`    | an 1-7 character long string - example `atmos` | the id of the config entry the target should be loaded, supported for hekate 5.0.2+ 
+Attribute   | possible values                                        | Description
+----------- | ------------------------------------------------------ | ----------------
+`type`      | empty / `section` / `payload`                          | This defines the type of element this section defines, if left empty it will automatically differentiate it by checking if a path is set
+`name`      | any string - example: `atmosphere`                     | The entry name, shown in the Overlay
+`path`      | a path - example: `/bootloader/hekate.bin`             | The absolute path, based on the root of the sd, to the payload that should be loaded
+`bootPos`   | a number                                               | The config position of the config the target payload should load, currently only supported for hekate
+`bootId`    | an 1-7 character long string - example `atmos`         | The id of the config entry the target should be loaded, supported for hekate 5.0.2+ 
+`ums`       | string from UMS target list - example `sd`             | The ums target, that should automatically be exposed via usb, supported for hekate
+
+### UMS Target
+Target           | possible values                            
+---------------- | -----------------------------
+SD-Card          | `sd`, default fallback
+EMMC BOOT0       | `nand_boot0`, `emmc_boot0`
+EMMC BOOT1       | `nand_boot1`, `emmc_boot1`
+EMMC Main/GPT    | `nand_gpt`, `emmc_gpt`
+EmuNAND BOOT0    | `emu_boot0`
+EmuNAND BOOT1    | `emu_boot1`
+EmuNAND Main/GPT | `emu_gpt`
 
 ## Example configuration
 ```
@@ -58,6 +70,19 @@ path=/payloads/hekate_ctcaer.bin
 [LOCKPICKRCM]
 name=Hekate
 path=/payloads/Lockpick_RCM.bin
+
+[UMS]
+name=UMS
+
+[SD_CARD]
+name=SD
+path=/payloads/hekate_ctcaer.bin
+ums = sd
+
+[EMMC_GPT]
+name=EMMC GPT 
+path=/payloads/hekate_ctcaer.bin
+ums = emmc_gpt
 
 ```
 

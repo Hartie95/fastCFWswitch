@@ -22,6 +22,10 @@ namespace fastCFWSwitcher {
                 return autobootID;
             }
 
+            std::string getUmsName(){
+                return umsName;
+            }
+
             void setBootPos(int pos){
                 this->autobootPos = pos;
             }
@@ -30,10 +34,15 @@ namespace fastCFWSwitcher {
                 this->autobootID = id;
             }
 
+            void setUmsName(std::string umsName){
+                this->umsName = umsName;
+            }
+
         private:
             std::string name;
             std::string path;
-            int autobootPos;
+            int autobootPos = -1;
             std::string autobootID;
+            std::string umsName;
     };
 }

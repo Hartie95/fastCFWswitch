@@ -28,6 +28,18 @@ alignas(0x1000) static  u8 g_reboot_payload[IRAM_PAYLOAD_MAX_SIZE];
 #define BOOT_CFG_TO_EMUMMC   (1 << 3)
 #define BOOT_CFG_SEPT_RUN    (1 << 7)
 
+#define EXTRA_CFG_NYX_UMS    (1 << 5)
+
+typedef enum _nyx_ums_type
+{
+    NYX_UMS_SD_CARD = 0,
+    NYX_UMS_EMMC_BOOT0,
+    NYX_UMS_EMMC_BOOT1,
+    NYX_UMS_EMMC_GPP,
+    NYX_UMS_EMUMMC_BOOT0,
+    NYX_UMS_EMUMMC_BOOT1,
+    NYX_UMS_EMUMMC_GPP
+} nyx_ums_type;
 
 typedef struct __attribute__((__packed__)) _boot_cfg_t
 {
@@ -43,6 +55,7 @@ typedef struct __attribute__((__packed__)) _boot_cfg_t
             char emummc_path[0x78]; // emuMMC/XXX, ASCII null teminated.
         };
         u8 ums; // nyx_ums_type.
+        u8 sept; // nyx_sept_type.
         u8 xt_str[0x80];
     };
 } boot_cfg_t;
@@ -80,6 +93,28 @@ void PayloadHandler::setError(std::string errorString){
     this->frame->setSubtitle(errorString);
 }
 
+int getHekateUMSId(std::string name){
+    if(name == "nand_boot0" || name == "emmc_boot0"){
+        return nyx_ums_type::NYX_UMS_EMMC_BOOT0;
+    } 
+    if(name == "nand_boot1" || name == "emmc_boot1"){
+        return nyx_ums_type::NYX_UMS_EMMC_BOOT1;
+    } 
+    if(name == "nand_gpt" || name == "emmc_gpt"){
+        return nyx_ums_type::NYX_UMS_EMMC_GPP;
+    }
+    if(name == "emu_boot0"){
+        return nyx_ums_type::NYX_UMS_EMUMMC_BOOT0;
+    } 
+    if(name == "emu_boot1"){
+        return nyx_ums_type::NYX_UMS_EMUMMC_BOOT1;
+    }
+    if(name == "emu_gpt"){
+        return nyx_ums_type::NYX_UMS_EMUMMC_GPP;
+    } 
+    return nyx_ums_type::NYX_UMS_SD_CARD;
+}
+
 void PayloadHandler::applyPayloadArgs(fastCFWSwitcher::Payload* payload){
     PayloadType payloadType = getBinPayloadType(payload);
 
@@ -98,6 +133,11 @@ void PayloadHandler::applyPayloadArgs(fastCFWSwitcher::Payload* payload){
                 hekateCFG->boot_cfg = BOOT_CFG_AUTOBOOT_EN;
                 hekateCFG->autoboot = payload->getBootPos();
                 hekateCFG->autoboot_list = 0;
+            } else if(!payload->getUmsName().empty()){
+                boot_cfg_t* hekateCFG = (boot_cfg_t*) &g_reboot_payload[HEKATE_AUTOBOOT_POS];
+                hekateCFG->boot_cfg = BOOT_CFG_AUTOBOOT_EN;
+                hekateCFG->extra_cfg = EXTRA_CFG_NYX_UMS;
+                hekateCFG->ums = getHekateUMSId(payload->getUmsName()); // set ums target
             }
             break;
         }

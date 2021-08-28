@@ -4,10 +4,11 @@
 
 #include "payload.h"
 #include "payloadHandler.h"
+#include "ams_bpc.h"
 
 using namespace fastCFWSwitcher;
 
-#define IRAM_PAYLOAD_MAX_SIZE 0x2F000
+#define IRAM_PAYLOAD_MAX_SIZE 0x24000
 #define IRAM_PAYLOAD_BASE 0x40010000
 
 
@@ -210,16 +211,23 @@ bool PayloadHandler::loadPayload(fastCFWSwitcher::Payload* payload){
     return true;
 }
 
-//todo better error handling
-void PayloadHandler::rebootToPayload(fastCFWSwitcher::Payload* payload) {
-    bool loadResult = loadPayload(payload);
-
-    if(!loadResult){
-        return;
+/*
+* Does the reboot to payload in a safer way, supported by newer atmospehre versions
+*/
+bool PayloadHandler::doRebootAmsBpc(){
+    Result rc = amsBpcSetRebootPayload(g_reboot_payload, IRAM_PAYLOAD_MAX_SIZE);
+    if (R_FAILED(rc)) {
+        setError("Failed to set reboot payload"+std::to_string(rc));
+        return false;
     }
+    spsmShutdown(true);
+    return true;
+}
 
-    applyPayloadArgs(payload);
-
+/*
+* Used as reboot method for older atmosphere versions and CFWs
+*/
+void PayloadHandler::doRebootClassic(){
     clear_iram();
     for (size_t i = 0; i < IRAM_PAYLOAD_MAX_SIZE; i += 0x1000) {
         copy_to_iram(IRAM_PAYLOAD_BASE + i, &g_reboot_payload[i], 0x1000);
@@ -235,9 +243,26 @@ void PayloadHandler::rebootToPayload(fastCFWSwitcher::Payload* payload) {
             break;
         }
     }
+
     if(result){
         setError("cmp failed"+std::to_string(result));
     } else{
         splSetConfig((SplConfigItem)65001, 2);
+    }
+}
+
+//todo better error handling
+void PayloadHandler::rebootToPayload(fastCFWSwitcher::Payload* payload) {
+    bool loadResult = loadPayload(payload);
+
+    if(!loadResult){
+        return;
+    }
+
+    applyPayloadArgs(payload);
+
+
+    if(useClassic || !doRebootAmsBpc()){
+        doRebootClassic();
     }
 }

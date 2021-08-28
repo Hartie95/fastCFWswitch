@@ -38,13 +38,13 @@ include $(DEVKITPRO)/libnx/switch_rules
 #   NACP building is skipped as well.
 #---------------------------------------------------------------------------------
 APP_TITLE	:=	fastCFWswitch
-APP_VERSION :=	1.2.0
+APP_VERSION :=	1.3.0
 
 TARGET		:=	$(notdir $(CURDIR))
 BUILD		:=	build
-SOURCES		:=	source libs/inih
+SOURCES		:=	source libs/inih libs/atmos
 DATA		:=	data
-INCLUDES	:=	include libs/libtesla/include   libs/inih
+INCLUDES	:=	include libs/libtesla/include libs/inih libs/atmos
 
 NO_ICON		:=  1
 

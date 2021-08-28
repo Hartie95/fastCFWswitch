@@ -12,7 +12,7 @@ namespace fastCFWSwitcher {
     class PayloadHandler{
 
         public:
-            PayloadHandler(tsl::elm::OverlayFrame* frame) : frame(frame){
+            PayloadHandler(tsl::elm::OverlayFrame* frame, bool useClassic) : frame(frame), useClassic(useClassic){
             }
             ~PayloadHandler(){}
             void rebootToPayload(fastCFWSwitcher::Payload* payload);
@@ -26,6 +26,9 @@ namespace fastCFWSwitcher {
             bool loadPayload(fastCFWSwitcher::Payload* payload);
             void applyPayloadArgs(fastCFWSwitcher::Payload* payload);
             PayloadType getBinPayloadType(fastCFWSwitcher::Payload* payload);
+            bool doRebootAmsBpc();
+            void doRebootClassic();
             tsl::elm::OverlayFrame* frame;
+            bool useClassic;
     };
 }

@@ -74,15 +74,13 @@ class FastCFWSwitchOverlay : public tsl::Overlay {
 private:
     Result splInitializeResult;
     Result spsmInitializeResult;
-    Result amsBpcInitializeResult;
     bool useClassic;
 public:
     // libtesla already initialized fs, hid, pl, pmdmnt, hid:sys and set:sys
     virtual void initServices() override {
         splInitializeResult = splInitialize();
-
         spsmInitializeResult = spsmInitialize();
-        amsBpcInitializeResult = amsBpcInitialize();
+
 
     }  // Called at the start to initialize all services necessary for this Overlay
     virtual void exitServices() override {
@@ -99,10 +97,9 @@ public:
             //unable to init spl, cant reboot this way
             return initially<FastCFWSwitchErrorGui>("Failed to init spl service\nError code: "+std::to_string(splInitializeResult));
         }
-        if(R_FAILED(spsmInitializeResult)){
+        //amsBpc is initialiced here, since the sm session is already closed by now
+        if(R_FAILED(spsmInitializeResult) || R_FAILED(amsBpcInitialize())){
             useClassic = true;
-        } else if(R_FAILED(amsBpcInitializeResult)){
-            useClassic=true;
         }
 
         // check if reboot to payload is supported:

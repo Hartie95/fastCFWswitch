@@ -74,13 +74,14 @@ class FastCFWSwitchOverlay : public tsl::Overlay {
 private:
     Result splInitializeResult;
     Result spsmInitializeResult;
-    bool useClassic;
+    bool useClassic = false;
 public:
     // libtesla already initialized fs, hid, pl, pmdmnt, hid:sys and set:sys
     virtual void initServices() override {
         splInitializeResult = splInitialize();
         spsmInitializeResult = spsmInitialize();
 
+        useClassic = isServiceRunning("tx") || isServiceRunning("rnx");
 
     }  // Called at the start to initialize all services necessary for this Overlay
     virtual void exitServices() override {
@@ -91,6 +92,16 @@ public:
 
     virtual void onShow() override {}    // Called before overlay wants to change from invisible to visible state
     virtual void onHide() override {}    // Called before overlay wants to change from visible to invisible state
+
+    bool isServiceRunning(const char *serviceName) {
+      u8 tmp=0;
+      SmServiceName service_name = smEncodeName(serviceName);
+      Result rc = serviceDispatchInOut(smGetServiceSession(), 65100, service_name, tmp);
+      if (R_SUCCEEDED(rc) && tmp & 1)
+        return true;
+      else
+        return false;
+    }
 
     virtual std::unique_ptr<tsl::Gui> loadInitialGui() override {
         if(R_FAILED(splInitializeResult)){

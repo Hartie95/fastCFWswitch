@@ -33,56 +33,63 @@ EmuNAND Main/GPT | `emu_gpt`
 
 ## Example configuration
 ```
-[CFWS]
+[CFW]
 type=section
-name=cfws
+name=CFW
 
-[SYSNAND]
-name=sysnand
-path=/payloads/hekate_ctcaer.bin
+[SYSMMC]
+name=sysMMC
+path=/bootloader/update.bin
 bootId=sysnand
 
-[EMUNAND]
-name=emunand
-path=/payloads/hekate_ctcaer.bin
+[EMUMMC]
+name=emuMMC
+path=/bootloader/update.bin
 bootId=emunand
 
 [ATMOSPHERE]
-name=atmosphere
+name=Atmosphere
 path=/atmosphere/reboot_payload.bin
 
 [SXOS]
-name=SxOS
+name=SX OS
 path=/sxos/reboot_payload.bin
 
 [ANDROID]
 name=Android
-path=/payloads/hekate_ctcaer.bin
-bootPos=2
+path=/bootloader/update.bin
+bootId=SWANDR
+
+[Ubuntu]
+name=Ubuntu
+path=/bootloader/update.bin
+bootId=SWR-UBU
+
 
 [TOOLS]
 name=Tools
 
 [HEKATE]
-name=Hekate
-path=/payloads/hekate_ctcaer.bin
+name=hekate
+path=/bootloader/update.bin
 
 [LOCKPICKRCM]
 name=Lockpick RCM
-path=/payloads/Lockpick_RCM.bin
+path=/bootloader/payloads/Lockpick_RCM.bin
+
 
 [UMS]
-name=UMS
+name=hekate UMS options
 
 [SD_CARD]
-name=SD
-path=/payloads/hekate_ctcaer.bin
-ums = sd
+name=microSD
+path=/bootloader/update.bin
+ums=sd
 
 [EMMC_GPT]
 name=EMMC GPT 
-path=/payloads/hekate_ctcaer.bin
-ums = emmc_gpt
+path=/bootloader/update.bin
+ums=emmc_gpt
 
 ```
 

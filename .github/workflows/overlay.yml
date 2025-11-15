@@ -23,6 +23,7 @@ jobs:
         ./build.sh
     - uses: actions/upload-artifact@v4
       with:
-        name: SysDVR-Overlay-dev
+        name: fastCFWswitch-dev
         path: release/switch/.overlays/*.ovl
         include-hidden-files: true
+#

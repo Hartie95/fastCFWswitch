@@ -1,0 +1,28 @@
+name: fastCFWswitch
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ master ]
+    paths:
+  pull_request:
+    branches: [ master ]
+    paths:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: devkitpro/devkita64:latest
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: recursive
+    - name: Run build script
+      run: |
+        ./build.sh
+    - uses: actions/upload-artifact@v4
+      with:
+        name: SysDVR-Overlay-dev
+        path: release/switch/.overlays/*.ovl
+        include-hidden-files: true

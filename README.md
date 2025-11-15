@@ -16,8 +16,8 @@ Attribute   | possible values                                        | Descripti
 `type`      | empty / `section` / `payload`                          | This defines the type of element this section defines, if left empty it will automatically differentiate it by checking if a path is set
 `name`      | any string - example: `atmosphere`                     | The entry name, shown in the Overlay
 `path`      | a path - example: `/bootloader/hekate.bin`             | The absolute path, based on the root of the sd, to the payload that should be loaded
-`bootPos`   | a number                                               | The config position of the config the target payload should load, currently only supported for hekate
-`bootId`    | an 1-7 character long string - example `atmos`         | The id of the config entry the target should be loaded, supported for hekate 5.0.2+ 
+`bootPos`   | a number                                               | The config position of the [boot entry](https://github.com/CTCaer/hekate?tab=readme-ov-file#boot-entry-keyvalue-combinations) the target payload should load, currently only supported for hekate
+`bootId`    | an 1-7 character long string - example `atmos`         | The `id` of the [boot entry](https://github.com/CTCaer/hekate?tab=readme-ov-file#boot-entry-keyvalue-combinations) in hekates configuration, that should be loaded, supported for hekate 5.0.2+
 `ums`       | string from UMS target list - example `sd`             | The ums target, that should automatically be exposed via usb, supported for hekate
 
 ### UMS Target
@@ -50,10 +50,6 @@ bootId=emunand
 [ATMOSPHERE]
 name=Atmosphere
 path=/atmosphere/reboot_payload.bin
-
-[SXOS]
-name=SX OS
-path=/sxos/reboot_payload.bin
 
 [ANDROID]
 name=Android
